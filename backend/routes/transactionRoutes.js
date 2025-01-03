@@ -1,24 +1,20 @@
-import express from 'express';
+import { Router } from 'express';
 import { Connection, PublicKey } from '@solana/web3.js';
 import { Transaction } from '../models/models.js';
 
-const router = express.Router();
-const connection = new Connection(process.env.SOLANA_RPC_URL);
+const router = Router();
 
 // Submit transaction
 router.post('/submit', async (req, res) => {
     try {
         const { sender, recipient, amount, signature } = req.body;
-        
         const transaction = new Transaction({
             sender,
             recipient,
             amount,
             signature
         });
-        
         await transaction.save();
-        
         res.status(201).json({
             success: true,
             data: transaction
@@ -57,6 +53,10 @@ router.get('/history/:walletAddress', async (req, res) => {
 // Get transaction status
 router.get('/status/:signature', async (req, res) => {
     try {
+        if (!process.env.SOLANA_RPC_URL) {
+            throw new Error('Solana RPC URL not configured');
+        }
+        const connection = new Connection(process.env.SOLANA_RPC_URL);
         const { signature } = req.params;
         const transaction = await Transaction.findOne({ signature });
         

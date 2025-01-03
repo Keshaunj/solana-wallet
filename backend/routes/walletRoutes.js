@@ -1,31 +1,18 @@
-import express from 'express';
+import { Router } from 'express';
 import { Connection, PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { User } from '../models/models.js';
 
-const router = express.Router();
-const connection = new Connection(process.env.SOLANA_RPC_URL);
+const router = Router();
 
 // Create new wallet
 router.post('/create', async (req, res) => {
     try {
         const { username, walletAddress } = req.body;
-        
-        // Check if wallet already exists
-        const existingUser = await User.findOne({ walletAddress });
-        if (existingUser) {
-            return res.status(400).json({
-                success: false,
-                error: 'Wallet already registered'
-            });
-        }
-        
         const user = new User({
             username,
             walletAddress
         });
-        
         await user.save();
-        
         res.status(201).json({
             success: true,
             data: user
@@ -41,6 +28,10 @@ router.post('/create', async (req, res) => {
 // Get wallet balance
 router.get('/balance/:walletAddress', async (req, res) => {
     try {
+        if (!process.env.SOLANA_RPC_URL) {
+            throw new Error('Solana RPC URL not configured');
+        }
+        const connection = new Connection(process.env.SOLANA_RPC_URL);
         const { walletAddress } = req.params;
         const pubKey = new PublicKey(walletAddress);
         const balance = await connection.getBalance(pubKey);
@@ -61,9 +52,7 @@ router.get('/balance/:walletAddress', async (req, res) => {
 router.get('/:walletAddress', async (req, res) => {
     try {
         const { walletAddress } = req.params;
-        const user = await User.findOne({ walletAddress })
-            .populate('transactions')
-            .select('-__v');
+        const user = await User.findOne({ walletAddress });
         
         if (!user) {
             return res.status(404).json({
