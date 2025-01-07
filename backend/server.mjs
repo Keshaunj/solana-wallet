@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import walletRoutes from './routes/walletRoutes.js';
 import transactionRoutes from './routes/transactionRoutes.js';
+import watchlistRoutes from './routes/watchlistRoutes.js';
 
 dotenv.config();
 
@@ -16,12 +17,17 @@ mongoose.connect(process.env.MONGODB_URI)
     .catch((error) => console.error('MongoDB connection error:', error));
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3000', // Allow only requests from your React frontend
+    methods: 'GET,POST,PUT,DELETE', // Allow these HTTP methods
+    allowedHeaders: 'Content-Type,Authorization', // Allow these headers
+}));
 app.use(express.json());
 
 // Routes
 app.use('/api/wallet', walletRoutes);
 app.use('/api/transaction', transactionRoutes);
+app.use('/api/watchlist', watchlistRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {

@@ -9,6 +9,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
+    "@solana/spl-token-registry": "^0.2.4574",
     "@solana/web3.js": "^1.98.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
