@@ -4,9 +4,9 @@
   "main": "server.mjs",
   "type": "module",
   "scripts": {
+    "postinstall": "echo '--- CURRENT DIRECTORY ---' && pwd && echo '--- DIRECTORY CONTENTS ---' && ls -la && echo '--- PARENT DIRECTORY CONTENTS ---' && ls -la .. && echo '--- NPM VERSION ---' && npm --version && echo '--- NODE VERSION ---' && node --version",
     "start": "node server.mjs",
     "dev": "nodemon server.mjs",
-    "postinstall": "pwd && ls -la",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
@@ -21,4 +21,4 @@
   "devDependencies": {
     "nodemon": "^3.1.9"
   }
-}
+ }
