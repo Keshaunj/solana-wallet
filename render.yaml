@@ -3,8 +3,8 @@ services:
   - type: web
     name: solana-wallet-backend
     env: node
-    buildCommand: "cd backend && npm install"  # First go into backend directory
-    startCommand: "node server.mjs"  # Run server.mjs from backend directory
+    buildCommand: "cd backend && npm install"
+    startCommand: "cd backend && node server.mjs"  # Changed to reflect actual location
     envVars:
       - key: PORT
         value: "3000"
@@ -18,7 +18,7 @@ services:
     name: solana-wallet-frontend
     env: static
     buildCommand: "cd frontend && npm install && npm run build"
-    staticPublishPath: frontend/dist  # Updated path to match frontend directory
+    staticPublishPath: frontend/dist
     envVars:
       - key: VITE_API_URL
         value: "https://solana-wallet-backend.onrender.com"
