@@ -1,0 +1,50 @@
+services:
+  # Backend service (Express server)
+  - type: web
+    name: solana-wallet-backend
+    env: node
+    buildCommand: "npm install"
+    startCommand: "node server.mjs"
+    envVars:
+      - key: PORT
+        value: "3000"
+      - key: MONGODB_URI
+        value: "mongodb+srv://jshaunzero:Test123@cluster0.xu86r.mongodb.net/solana-wallet?retryWrites=true&w=majority&appName=Cluster0"
+      - key: SOLANA_RPC_URL
+        value: "https://api.devnet.solana.com"
+
+  # Frontend service (Vite React app)
+  - type: web
+    name: solana-wallet-frontend
+    env: static
+    buildCommand: "npm install && npm run build"
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: "https://solana-wallet-backend.onrender.com" # Replace with your backend Render URL
+
+# Ensure these dependencies are added to your frontend `package.json`:
+dependencies:
+  - "@radix-ui/react-alert-dialog"
+  - "@radix-ui/react-slot"
+  - "@solana/spl-token-registry"
+  - "class-variance-authority"
+  - "clsx"
+  - "lucide-react"
+  - "react"
+  - "react-dom"
+  - "tailwindcss-animate"
+devDependencies:
+  - "@eslint/js"
+  - "@types/react"
+  - "@types/react-dom"
+  - "@vitejs/plugin-react"
+  - "autoprefixer"
+  - "eslint"
+  - "eslint-plugin-react"
+  - "eslint-plugin-react-hooks"
+  - "eslint-plugin-react-refresh"
+  - "globals"
+  - "postcss"
+  - "tailwindcss"
+  - "vite"

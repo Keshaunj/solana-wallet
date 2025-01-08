@@ -12,9 +12,6 @@ dist-ssr
 .env.*
 mongodb.config
 
-# YAML configuration files
-*.yaml
-*.yml
 
 # Logs
 logs
