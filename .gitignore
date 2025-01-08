@@ -23,7 +23,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Backend specific
-backend/server.mjs
+
 
 # Editor and OS files
 .vscode/*
