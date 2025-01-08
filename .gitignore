@@ -12,7 +12,9 @@ dist
 dist-ssr
 *.local
 .env
-server.mjs
+# Ignore server.mjs
+backend/server.mjs
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
