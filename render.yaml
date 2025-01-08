@@ -1,16 +1,16 @@
-services:
+ services:
   # Backend service (Express server)
   - type: web
     name: solana-wallet-backend
     env: node
-    rootDirectory: backend  # Add this line to specify backend directory
+    rootDirectory: backend      # Matches your backend directory
     buildCommand: "npm install"
     startCommand: "node server.mjs"
     envVars:
       - key: PORT
         value: "3000"
       - key: MONGODB_URI
-        sync: false # Use Render dashboard to set this securely
+        sync: false
       - key: SOLANA_RPC_URL
         value: "https://api.devnet.solana.com"
 
@@ -18,8 +18,9 @@ services:
   - type: web
     name: solana-wallet-frontend
     env: static
-    buildCommand: "cd frontend && npm install && npm run build"
-    staticPublishPath: frontend/dist
+    rootDirectory: frontend    # Matches your frontend directory
+    buildCommand: "npm install && npm run build"
+    staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
         value: "https://solana-wallet-backend.onrender.com"
