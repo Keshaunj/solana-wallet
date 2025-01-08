@@ -1,3 +1,21 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+dist-ssr
+*.local
+
+# Environment variables and secrets
+.env
+*.env
+.env.*
+mongodb.config
+
+# YAML configuration files
+*.yaml
+*.yml
+
 # Logs
 logs
 *.log
@@ -7,15 +25,10 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-.env
-# Ignore server.mjs
+# Backend specific
 backend/server.mjs
 
-# Editor directories and files
+# Editor and OS files
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -25,3 +38,6 @@ backend/server.mjs
 *.njsproj
 *.sln
 *.sw?
+# .env - Ignores the standard environment file
+# *.env - Ignores any file ending with .env (like production.env, development.env)
+# .env.* - Ignores any file starting with .env (like .env.local, .env.production)
