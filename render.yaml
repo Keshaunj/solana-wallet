@@ -3,14 +3,14 @@ services:
   - type: web
     name: solana-wallet-backend
     env: node
-    workingDirectory: backend  # Changed from rootDirectory
+    rootDirectory: backend
     buildCommand: "npm install"
     startCommand: "node server.mjs"
     envVars:
       - key: PORT
         value: "3000"
       - key: MONGODB_URI
-        sync: false
+        value: ${MONGODB_URI}
       - key: SOLANA_RPC_URL
         value: "https://api.devnet.solana.com"
 
@@ -18,7 +18,7 @@ services:
   - type: web
     name: solana-wallet-frontend
     env: static
-    workingDirectory: frontend  # Changed from rootDirectory
+    rootDirectory: frontend
     buildCommand: "npm install && npm run build"
     staticPublishPath: dist
     envVars:
