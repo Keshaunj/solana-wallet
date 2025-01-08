@@ -1,9 +1,9 @@
- services:
+services:
   # Backend service (Express server)
   - type: web
     name: solana-wallet-backend
     env: node
-    rootDirectory: backend      # Matches your backend directory
+    workingDirectory: backend  # Changed from rootDirectory
     buildCommand: "npm install"
     startCommand: "node server.mjs"
     envVars:
@@ -18,7 +18,7 @@
   - type: web
     name: solana-wallet-frontend
     env: static
-    rootDirectory: frontend    # Matches your frontend directory
+    workingDirectory: frontend  # Changed from rootDirectory
     buildCommand: "npm install && npm run build"
     staticPublishPath: dist
     envVars:
