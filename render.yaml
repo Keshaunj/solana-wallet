@@ -4,7 +4,7 @@ services:
     name: solana-wallet-backend
     env: node
     buildCommand: "cd backend && npm install"
-    startCommand: "cd backend && node server.mjs"  # Changed to reflect actual location
+    startCommand: "cd /opt/render/project/src/backend && node server.mjs"  # Using absolute path
     envVars:
       - key: PORT
         value: "3000"
