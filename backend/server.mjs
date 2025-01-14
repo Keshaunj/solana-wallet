@@ -8,6 +8,11 @@ import watchlistRoutes from './routes/watchlistRoutes.js';
 
 dotenv.config();
 
+
+
+
+// Fix BAckend Routes new routes & buttons added!
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
