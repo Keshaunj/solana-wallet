@@ -1,15 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { fetchAllNetworkTokens } from '../services/tokenServices';
 
 const Watchlist = () => {
  const [watchlistItems, setWatchlistItems] = useState([]);
- const [newToken, setNewToken] = useState({ symbol: '', targetPrice: '' }); // Changed pair to symbol
+ const [newToken, setNewToken] = useState({ symbol: '', targetPrice: '' });
  const [error, setError] = useState('');
  const [searchTerm, setSearchTerm] = useState('');
  const [searchResults, setSearchResults] = useState([]);
  const [isSearching, setIsSearching] = useState(false);
  const [tokens, setTokens] = useState([]);
  const [loading, setLoading] = useState(true);
+ const [addingToken, setAddingToken] = useState(false);
  const searchRef = useRef(null);
 
  useEffect(() => {
@@ -44,23 +44,31 @@ const Watchlist = () => {
  }, [searchTerm, tokens]);
 
  const handleSearchSelect = (token) => {
-   console.log('Selected token:', token);
-   setSearchTerm(token.symbol); // Update search input
-   setNewToken({ ...newToken, symbol: token.symbol }); // Update selected token
+   setSearchTerm(token.symbol);
+   setNewToken({ ...newToken, symbol: token.symbol });
    setIsSearching(false);
  };
 
  const handleAddToken = async (e) => {
    e.preventDefault();
-   
+   setAddingToken(true); // Start loading
+
    if (!newToken.symbol || !newToken.targetPrice) {
      setError('Please fill in all fields');
+     setAddingToken(false); // End loading
+     return;
+   }
+
+   if (isNaN(newToken.targetPrice) || newToken.targetPrice <= 0) {
+     setError('Target price must be a positive number');
+     setAddingToken(false); // End loading
      return;
    }
 
    const selectedToken = tokens.find(t => t.symbol === newToken.symbol);
    if (!selectedToken) {
      setError('Please select a valid token');
+     setAddingToken(false); // End loading
      return;
    }
 
@@ -97,6 +105,8 @@ const Watchlist = () => {
    } catch (error) {
      setError('Error adding token to watchlist');
      console.error('Error:', error);
+   } finally {
+     setAddingToken(false); // End loading
    }
  };
 
@@ -132,7 +142,6 @@ const Watchlist = () => {
                placeholder={loading ? "Loading tokens..." : "Search for token (e.g., SOL, BONK)"}
                value={searchTerm}
                onChange={(e) => {
-                 console.log('Input value:', e.target.value);
                  setSearchTerm(e.target.value);
                  setIsSearching(true);
                }}
@@ -174,10 +183,10 @@ const Watchlist = () => {
            />
            <button 
              type="submit"
-             disabled={loading}
-             className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors disabled:bg-purple-400"
+             disabled={loading || addingToken}
+             className={`bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors ${addingToken ? 'opacity-50' : ''}`}
            >
-             Add
+             {addingToken ? 'Adding...' : 'Add'}
            </button>
          </div>
          {error && <p className="text-red-500 text-sm">{error}</p>}
