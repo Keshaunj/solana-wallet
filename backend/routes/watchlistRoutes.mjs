@@ -1,7 +1,6 @@
 import { Router } from 'express';
-import { User } from '../models/models.js';
 import { body, validationResult } from 'express-validator';
-
+import { User } from '../models/models.mjs';
 const router = Router();
 
 // Add token to watchlist

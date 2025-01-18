@@ -2,16 +2,23 @@ import mongoose from 'mongoose';
 
 // User Schema
 const userSchema = new mongoose.Schema({
-    username: { type: String, required: true, unique: true },
     walletAddress: { type: String, required: true, unique: true },
+    email: { type: String },
+    profileImage: { type: String },
+    emailNotifications: { type: Boolean, default: false },
+    priceAlerts: { type: Boolean, default: false },
     balance: { type: Number, default: 0 },
+    tradingStats: {
+        totalTrades: { type: Number, default: 0 },
+        successfulTrades: { type: Number, default: 0 },
+        lastTradeAt: { type: Date }
+    },
     transactions: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Transaction'
     }],
     createdAt: { type: Date, default: Date.now }
 });
-
 // Transaction Schema
 const transactionSchema = new mongoose.Schema({
     sender: { type: String, required: true },
