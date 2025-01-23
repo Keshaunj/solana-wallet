@@ -1,30 +1,25 @@
-import React from "react";
-import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
-import { WalletAdapterNetwork } from "@solana/wallet-adapter-base";
-import {
-  ConnectionProvider,
-  WalletProvider,
-} from "@solana/wallet-adapter-react";
-import {
-  WalletModalProvider,
-  WalletMultiButton,
-} from "@solana/wallet-adapter-react-ui";
-import { PhantomWalletAdapter } from "@solana/wallet-adapter-wallets";
-import { clusterApiUrl } from "@solana/web3.js";
-import TradingPairsTable from "./components/TradingPairsTable";
-import Watchlist from "./components/Watchlist";
-import Alerts from "./components/Alerts";
-import UserProfile from "./components/UserProfile";
-import TokenListComponent from "./components/TokenListComponent";
-
-// Import wallet adapter styles
-import "@solana/wallet-adapter-react-ui/styles.css";
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
+import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
+import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { PhantomWalletAdapter } from '@solana/wallet-adapter-wallets';
+import { clusterApiUrl } from '@solana/web3.js';
+import TradingPairsTable from './components/TradingPairsTable';
+import Watchlist from './components/Watchlist';
+import Alerts from './components/Alerts';
+import UserProfile from './components/UserProfile';
+import TokenListComponent from './components/TokenListComponent';
+import { useTokenData } from './hooks/useTokenData';
+import { fetchSolanaTokenData } from './utils/solanaApi';
+import '@solana/wallet-adapter-react-ui/styles.css';
 
 function App() {
-  // Configure Solana wallet
-  const network = WalletAdapterNetwork.Devnet;
+  const network = WalletAdapterNetwork.Mainnet;
   const endpoint = clusterApiUrl(network);
   const wallets = [new PhantomWalletAdapter()];
+  const { tokenData, loading, error } = useTokenData('SOL');
+  const { balance } = fetchSolanaTokenData('SOL');
 
   return (
     <ConnectionProvider endpoint={endpoint}>
@@ -32,61 +27,39 @@ function App() {
         <WalletModalProvider>
           <Router>
             <div className="min-h-screen bg-gray-900 text-gray-100">
-             
-              <nav className="bg-gray-800 p-4">
-                <div className="container mx-auto">
-                  <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
-                    <h1 className="text-xl font-bold text-purple-400 mb-4 sm:mb-0">
-                      Pump Scanner
-                    </h1>
-                    <div className="flex items-center flex-wrap justify-center gap-6">
-                      <div className="flex items-center space-x-6">
-                        <Link
-                          to="/"
-                          className="hover:text-purple-400 transition-colors"
-                        >
-                          Trading
-                        </Link>
-                        <Link
-                          to="/watchlist"
-                          className="hover:text-purple-400 transition-colors"
-                        >
-                          Watchlist
-                        </Link>
-                        <Link
-                          to="/alerts"
-                          className="hover:text-purple-400 transition-colors"
-                        >
-                          Alerts
-                        </Link>
-                        <Link
-                          to="/profile"
-                          className="hover:text-purple-400 transition-colors"
-                        >
-                          Profile
-                        </Link>
-                        <Link
-                          to="/tokens"
-                          className="hover:text-purple-400 transition-colors"
-                        >
-                          Tokens
-                        </Link>
+              <nav className="bg-gray-800 border-b border-gray-700">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="flex items-center justify-between h-16">
+                    <div className="flex items-center">
+                      <div className="hidden md:block">
+                        <div className="ml-10 flex items-baseline space-x-4">
+                        <div className="text-2xl font-bold text-gray-100 bg-pink-800 px-4 py-2 rounded-md">Flash Firm</div>
+                          <Link to="/" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Home</Link>
+                          <Link to="/watchlist" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Watchlist</Link>
+                          <Link to="/alerts" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Alerts</Link>
+                          <Link to="/profile" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Profile</Link>
+                          <Link to="/tokens" className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Tokens</Link>
+                        </div>
                       </div>
-                      <div>
-                        <WalletMultiButton className="bg-purple-600 hover:bg-purple-700 transition-colors px-6" />
+                    </div>
+                    <div className="hidden md:block">
+                      <div className="ml-4 flex items-center md:ml-6">
+                        <WalletMultiButton className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" />
                       </div>
                     </div>
                   </div>
                 </div>
               </nav>
-              <main className="container mx-auto p-4">
-                <Routes>
-                  <Route path="/" element={<TradingPairsTable />} />
-                  <Route path="/watchlist" element={<Watchlist />} />
-                  <Route path="/alerts" element={<Alerts />} />
-                  <Route path="/profile" element={<UserProfile />} />
-                  <Route path="/tokens" element={<TokenListComponent />} />
-                </Routes>
+              <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                <div className="px-4 py-6 sm:px-0">
+                  <Routes>
+                    <Route path="/" element={<TradingPairsTable />} />
+                    <Route path="/watchlist" element={<Watchlist />} />
+                    <Route path="/alerts" element={<Alerts />} />
+                    <Route path="/profile" element={<UserProfile balance={balance} />} />
+                    <Route path="/tokens" element={<TokenListComponent tokenData={tokenData} loading={loading} error={error} />} />
+                  </Routes>
+                </div>
               </main>
             </div>
           </Router>

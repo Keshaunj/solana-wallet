@@ -1,180 +1,161 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { TrashIcon, PlusIcon } from 'lucide-react';
+import { TrashIcon, PlusIcon, RotateCwIcon } from 'lucide-react';
+import { Connection, PublicKey } from '@solana/web3.js';
+import { debounce } from 'lodash';
 
 const Watchlist = () => {
   const { publicKey } = useWallet();
-  const [watchlistItems, setWatchlistItems] = useState([]);
+  const [watchlistItems, setWatchlistItems] = useState(() => {
+    const saved = localStorage.getItem('watchlist');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchWatchlist = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch(`/api/watchlist/${publicKey.toString()}`);
-        const data = await response.json();
-        if (response.ok) {
-          setWatchlistItems(data.data);
-        } else {
-          setError(data.error);
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const connection = new Connection('https://api.mainnet-beta.solana.com');
 
-    if (publicKey) {
-      fetchWatchlist();
+  const fetchWatchlist = useCallback(async () => {
+    if (!publicKey) return;
+    try {
+      setLoading(true);
+      const watchlistData = await Promise.all(
+        watchlistItems.map(async (item) => {
+          try {
+            const tokenMint = new PublicKey(item.address);
+            const tokenAccounts = await connection.getTokenAccountsByOwner(publicKey, { mint: tokenMint });
+            const balance = tokenAccounts.value[0]?.account.data.parsed.info.tokenAmount.uiAmount || 0;
+            const response = await fetch(`https://api.coingecko.com/api/v3/coins/${item.id}`);
+            const data = await response.json();
+            return { ...item, balance, price: data.market_data.current_price.usd, change: data.market_data.price_change_percentage_24h };
+          } catch (err) {
+            console.error(`Error fetching token ${item.symbol}:`, err);
+            return { ...item, balance: 0, price: 0, change: 0 };
+          }
+        })
+      );
+      setWatchlistItems(watchlistData);
+      localStorage.setItem('watchlist', JSON.stringify(watchlistData));
+    } catch (err) {
+      setError('Failed to fetch watchlist. Please try again.');
+    } finally {
+      setLoading(false); 
     }
-  }, [publicKey]);
+  }, [publicKey, watchlistItems]);
+
+  useEffect(() => {
+    fetchWatchlist();
+  }, [fetchWatchlist]);
+
+  const searchCoins = useCallback(async (query) => {
+    try {
+      const response = await fetch(`https://api.coingecko.com/api/v3/search?query=${query}`);
+      const data = await response.json();
+      setSearchResults(data.coins.slice(0, 5));
+    } catch (err) {
+      console.error('Error searching coins:', err);
+    }
+  }, []);
+
+  const debouncedSearch = useCallback(debounce(searchCoins, 300), [searchCoins]);
 
   const handleSearch = async (e) => {
     const value = e.target.value;
     setSearchTerm(value);
-  
     if (value.length < 2) {
       setSearchResults([]);
       return;
     }
+    debouncedSearch(value);    
+  };
+
+  const addToWatchlist = useCallback(async (token) => {
+    const response = await fetch(`https://api.coingecko.com/api/v3/coins/${token.id}`);
+    const data = await response.json();
+    const newItem = { 
+      ...token, 
+      balance: 0, 
+      price: data.market_data.current_price.usd,
+      change: data.market_data.price_change_percentage_24h
+    };
+    setWatchlistItems((prev) => [...prev, newItem]);
+    setSearchTerm('');
+    setSearchResults([]);
+  }, []);
   
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/tokens/search?q=${value}`);
-  
-      if (response.ok) {
-        const data = await response.json();
-        setSearchResults(data.tokens);
-      } else {
-        const errorText = await response.text();
-        setError(`Error searching tokens: ${errorText}`);
-      }
-    } catch (err) {
-      setError(`Error searching tokens: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const addToWatchlist = async (token) => {
-    try {
-      const response = await fetch('/api/watchlist/add', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tokenAddress: token.address,
-          symbol: token.symbol,
-        }),
-      });
-
-      if (response.ok) {
-        setWatchlistItems([...watchlistItems, token]);
-        setSearchTerm('');
-        setSearchResults([]);
-      } else {
-        setError(await response.json().error);
-      }
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const removeFromWatchlist = async (tokenAddress) => {
-    try {
-      const response = await fetch(`/api/watchlist/${publicKey.toString()}/${tokenAddress}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setWatchlistItems(watchlistItems.filter((item) => item.address !== tokenAddress));
-      } else {
-        setError(await response.json().error);
-      }
-    } catch (err) {
-      setError(err.message);
-    }
-  };
+  const removeFromWatchlist = useCallback(async (tokenId) => {
+    setWatchlistItems((prev) => prev.filter((item) => item.id !== tokenId));
+  }, []);
 
   return (
     <div className="p-4">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold text-purple-400">Watchlist</h2>
-        <div className="flex items-center space-x-4">
-          <div className="relative">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={handleSearch}
-              placeholder="Search tokens..."
-              className="w-full bg-gray-800 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-            {loading && (
-              <div className="absolute right-3 top-3">
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-500"></div>
-              </div>
-            )}
-          </div>
-          <button
-            onClick={() => addToWatchlist(searchResults[0])}
-            disabled={searchResults.length === 0}
-            className={`bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors ${
-              searchResults.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            <PlusIcon className="w-5 h-5 inline-block mr-2" />
-            Add Token
-          </button>
-        </div>
+      <h2 className="text-2xl font-bold text-purple-400 mb-4">
+        Watchlist
+        <button 
+          onClick={fetchWatchlist}
+          disabled={loading}
+          className="ml-2 text-gray-400 hover:text-purple-500 transition-colors disabled:opacity-50"
+          title="Refresh watchlist"
+        >
+          <RotateCwIcon className="w-5 h-5" />
+        </button>  
+      </h2>
+      <div className="flex mb-4">
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={handleSearch}
+          placeholder="Search coins..."
+          className="flex-grow bg-gray-800 rounded-l-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+        />
+        <button
+          onClick={() => addToWatchlist(searchResults[0])}
+          disabled={searchResults.length === 0}
+          className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-r-lg disabled:opacity-50"
+        >
+          <PlusIcon className="w-5 h-5" />
+        </button>
       </div>
-
-      {error && (
-        <div className="bg-red-500 text-white p-4 rounded-lg mb-6">
-          {error}
-        </div>
-      )}
-
-      {watchlistItems.length === 0 ? (
+      {error && <div className="bg-red-500 text-white p-4 rounded-lg mb-4">{error}</div>}
+      {loading ? (
+        <div>Loading...</div>
+      ) : watchlistItems.length === 0 ? (
         <div className="text-gray-400">Your watchlist is empty.</div>
       ) : (
         <div className="space-y-4">
           {watchlistItems.map((item) => (
-            <div
-              key={item.address}
-              className="bg-gray-800 p-4 rounded-lg flex justify-between items-center hover:bg-gray-700 transition-colors"
-            >
-              <div className="flex items-center">
-                {item.logoURI && (
-                  <img
-                    src={item.logoURI}
-                    alt={item.name}
-                    className="w-8 h-8 rounded-full mr-3"
-                  />
-                )}
-                <div>
-                  <h3 className="font-semibold text-purple-400">{item.symbol}</h3>
-                  <p className="text-sm text-gray-400">{item.name}</p>
-                </div>
+            <div key={item.id} className="bg-gray-800 p-4 rounded-lg flex justify-between items-center">
+              <div>
+                <h3 className="font-semibold text-purple-400">{item.name}</h3>
+                <p className="text-sm text-gray-400">
+                  {item.symbol} | ${item.price} | {item.change}%
+                </p>
               </div>
               <div className="flex items-center space-x-4">
-                <div className="text-right">
-                  <p className="text-lg">${item.price}</p>
-                  <p className={item.priceChange >= 0 ? 'text-green-500' : 'text-red-500'}>
-                    {item.priceChange >= 0 ? '+' : ''}{item.priceChange}%
-                  </p>
-                </div>
+                <p>Balance: {item.balance}</p>
                 <button
-                  onClick={() => removeFromWatchlist(item.address)}
+                  onClick={() => removeFromWatchlist(item.id)}
                   className="text-gray-400 hover:text-red-500 transition-colors"
+                  title="Remove from watchlist"
                 >
                   <TrashIcon className="w-5 h-5" />
                 </button>
               </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {searchResults.length > 0 && (
+        <div className="absolute mt-1 w-full bg-gray-800 rounded-md shadow-lg">
+          {searchResults.map((coin) => (
+            <div
+              key={coin.id}
+              className="p-2 hover:bg-gray-700 cursor-pointer"
+              onClick={() => addToWatchlist(coin)}
+            >
+              {coin.name} ({coin.symbol})
             </div>
           ))}
         </div>
